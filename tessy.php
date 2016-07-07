@@ -36,27 +36,21 @@ class Tessy {
 	 */
 
 	public $root; // root of project e.g http://example.com/
-
 	public static $c; // db connection (object)
-
 	protected $routes = [];
-
 	public $routeParams = [];
-
 	public $routeElse = "Page Not Found!"; // if specified route does not exist
+	public $uploadErrors = [];
 
-
-	/*
+	/**
 	 * METHODS
 	 */
 
 	function __construct( $args = [] ) {
-
 		$default = array(
 			'root' => '',
-			'auth_users' => false,
-			'libs_path' => false,
-			'libs' => null
+			'libs_path' => '',
+			'libs' => ''
 		);
 
 		$args = array_merge( $default, $args );
@@ -64,29 +58,22 @@ class Tessy {
 		// project root
 		$this->root = $args['root'] . "/";
 
-		// if auth_users is true, start a session
-		if( $args['auth_users'] ) session_start();
-
 		//include any libraries
-		if( $args['libs'] != null ) {
-			foreach( $args['libs'] as $lib ) {
-				if( $args['libs_path'] ) $lib = $args['libs_path'] . "/" . $lib;
-				require_once $lib . ".php";
-			}
+		if( $args['libs'] != NULL ) {
+			foreach( $args['libs'] as $lib )
+				require_once $args['libs_path'] . "/" . $lib . ".php";
 		}
-
 	}
 
-	/*
+	/**
 	 * DB connection
 	 */
 
 	// open db connection
 	public static function odb( $data ) {
-
 		$default = array(
 			"host" => "localhost",
-			"dbname" => "test",
+			"dbname" => "",
 			"username" => "root",
 			"password" => ""
 		);
@@ -94,31 +81,24 @@ class Tessy {
 		$data = array_merge( $default, $data );
 
 		try {
-
 			self::$c = new PDO( "mysql:host=" . $data["host"] .";dbname=". $data["dbname"], $data["username"], $data["password"] );
 			self::$c->setAttribute( PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION );
-
 		} catch ( PDOException $e ) {
-
 		    print "Error: " . $e->getMessage() . "<br/>";
 		    die();
-
 		}
 	}
 
 	// close db connection
 	public static function cdb() {
-
-		$this->c = null;
-
+		self::$c = NULL;
 	}
 
-	/*
+	/**
 	 * DB query
 	 */
 
 	public function create( $table, $data ) {
-
 		foreach ($data as $key => $value)
 			$data[$key] = "'$value'";
 
@@ -128,96 +108,80 @@ class Tessy {
 		$q .= implode( ", ", array_values( $data ) ) . " )";
 
 		try {
-
 			$_ = self::$c->prepare( $q );
 			$_->execute();
-
 		} catch ( PDOException $e ) {
-
 			echo $q . "<br>" . $e->getMessage();		
 		}
-
 	}
 
-	public function read( $table, $columns = false, $other = false ) {
-
+	public function read( $table, $columns = NULL, $clauses = NULL ) {
 		// construct query
 		$q = "SELECT ";
-		if( $columns ) $q .= implode( ", ", $columns ) . " "; else $q .= "* ";
+		if( $columns != NULL ) $q .= implode( ", ", $columns ) . " "; else $q .= "* ";
 		$q .= "FROM " . $table . " ";
-		if( $other ) $q .= $other;
+		if( $clauses != NULL ) $q .= $clauses;
 
 		try {
-
 			$_ = self::$c->prepare( $q );
 			$_->execute();
-			return array( 'data' => $_->fetchAll(), 'count' => $_->rowCount() );
-
+			// strip slashes
+			$results = $_->fetchAll();
+			foreach( $results as $index => $result ) {
+				foreach( $result as $column => $field )
+					$result[$column] = stripslashes( $field );
+				$results[$index] = $result;
+			}
+			// return result
+			return array( 'data' => $results, 'count' => $_->rowCount() );
 		} catch ( PDOException $e ) {
-
-			echo $q . "<br>" . $e->getMessage();
-			
+			echo $q . "<br>" . $e->getMessage();	
 		}
-
 	}
 
-	public function edit( $table, $data, $other ) {
-
+	public function edit( $table, $data, $clauses ) {
 		// construct query
 		$q = "UPDATE " . $table . " SET ";
 		$temp = [];
 		foreach( $data as $key => $value )
-			$temp[] = $key . " = " . $value;
+			$temp[] = "$key = '$value'";
 		$q .= implode( ", ", $temp );
-		$q .= $other;
+		$q .= " " . $clauses;
 
 		try {
-
 			$_ = self::$c->prepare( $q );
 			$_->execute();
-			return true;
-
+			return TRUE;
 		} catch ( PDOException $e ) {
-
 			echo $q . "<br>" . $e->getMessage();
-			return false;
-			
+			return FALSE;
 		}
-
 	}
 
-	public function delete( $table, $other ) {
-
+	public function delete( $table, $clauses ) {
 		// construct query
 		$q = "DELETE FROM " . $table . " ";
-		$q .= $other;
-
+		$q .= $clauses;
 		try {
-
 			$_ = self::$c->prepare( $q );
 			$_->execute();
-			return true;
-
+			return TRUE;
 		} catch ( PDOException $e ) {
-
 			echo $q . "<br>" . $e->getMessage();
-			return false;
-			
+			return FALSE;			
 		}
-
 	}
 
-	/*
+	/**
 	 * Data validation and sanitization
 	 */
 
 	// validate data using regular expressions or PHP's filter_var()
 	public function validate( $data, $type ) {
-
-		/* 
+		/** 
 		 * DATA TYPES
 		 * username - starts with _ or a-z, alphanumeric chars only, case insensitive, no spaces
-		 * name - alphabetic chars, hypens, apostropes only, spaces, case insensitive
+		 * name - alphabetic chars, hypens, apostrophes only, spaces, case insensitive
 		 * email
 		 * number - int or float
 		 * url
@@ -236,33 +200,31 @@ class Tessy {
 				$data = explode( " ", $data );
 
 				foreach ($data as $name)
-					if( !preg_match( '~^[^0-9][-a-zA-Z0-9\'\.]*$~', $name ) ) return FALSE; 
+					if( !preg_match( '~^[^0-9][-a-zA-Z\'\.]*$~', $name ) ) return FALSE; 
 				return TRUE;
-			break;
+				break;
 
 			case 'email':
 				return filter_var( $data, FILTER_VALIDATE_EMAIL ) == TRUE;
-			break;
+				break;
 
 			case 'number':
 				return filter_var( $data, FILTER_VALIDATE_FLOAT ) == TRUE;
-			break;
+				break;
 
 			case 'url':
 				return filter_var( $data, FILTER_VALIDATE_URL ) == TRUE;
-			break;
+				break;
 			
 			default:
 				return FALSE;
-			break;
+				break;
 		}
-
 	}
 
 	// sanitize data
 	public function sanitize( $data ) {
-
-		/*
+		/**
 		 * 1. Trim
 		 * 2. Add slashes
 		 * 3. Remove JavaScript tags
@@ -295,205 +257,119 @@ class Tessy {
 	 */
 
 	public function meta( $elements ) {
-
 		foreach ($elements as $meta) {
 			echo "<meta ";
 			foreach ($meta as $attr => $value)
 				echo $attr.'="'.$value.'" ';
 			echo ">";
 		}
-
 	}
 
 	public function fav( $src = "favicon.ico", $type = "image/x-icon" ) {
-
-		echo '<link rel="icon" type="' . $type . '" href="' . $src . '">';
-
+		echo "<link rel=\"icon\" type=\"$type\" href=\"$this->root$src\" >";
 	}
 
 	public function css( $base, $srcs ) {
-
 		foreach( $srcs as $src )
-			echo '<link rel="stylesheet" href="'.$this->root.$base.$src.'.css" > ';
-
+			echo "<link rel=\"stylesheet\" href=\"$this->root$base$src.css\" >";
 	}
 
 	public function js( $base, $srcs ) {
-
 		foreach( $srcs as $src )
-			echo '<script src="'.$this->root.$base.$src.'.js" ></script>';
-
+			echo "<script src=\"$this->root$base$src.js\" ></script>";
 	}
 
 
-	/*
+	/**
 	 * Routing
 	 */
 
 	public function addRoute( $route, $call_back ) {
-
 		$__ = explode( "/", $route );
-		$this->routes[ $__[0] ] = $call_back;
-
+		$this->routes[ $__[1] ] = $call_back;
 	}
 
 	private function currentRoute() {
-
 		return explode( "/", $_SERVER['QUERY_STRING'] ); // from the url
-
 	}
 
 	public function route() {
-
 		// find matching route and return call back or 404 if there's no match
 		if( array_key_exists( $this->currentRoute()[0], $this->routes ) ) {
-
 			$this->routeParams = $this->currentRoute();
-			return $this->routes[ $this->currentRoute()[0] ]( $this );
-
+			if( is_callable( $this->routes[$this->currentRoute()[0]] ) ) $this->routes[$this->currentRoute()[0]]();
+			else call_user_func_array( $this->routes[$this->currentRoute()[0]], [ $this ] );
 		} else {
-
-			if( is_callable( $this->routeElse ) ) ( $this->routeElse )();
+			if( is_callable( $this->routeElse ) ) ($this->routeElse)();
 			else echo $this->routeElse;
-
-		}
-
-	}
-
-
-	/*
-	 * Authentication
-	 */
-
-	public function auth( $sessions, $redirect_url ) {
-
-		$s = [];
-		foreach ($sessions as $key => $value) {
-			
-			if( $_SESSION[ $key ] == $value ) $s[] = true;
-			else $s[] = false;
-
-		}
-
-		// all sessions' data must be correct for a user to be allowed access
-		if( in_array( false, $s) ) { 
-
-			$this->redirect_to( $redirect_url );
-			return true;
-
-		} else {
-
-			return false;
-			
-		}
-
-	}
-
-	public function create_session( $id, $data ) {
-
-		$_SESSION[ $id ] = $data;
-		return $_SESSION[ $id ];
-
-	}
-
-	/*
-	 * AJAX
-	 */
-
-	public function ajax( $data, $call_back ) {
-
-		$data_count = [];
-		foreach ($data as $var_name) {
-			
-			if( isset( $_REQUEST[$var_name] ) )
-				$$var_name = $_REQUEST[$var_name];
-
-		}
-
-		if( count( $data ) == count( $data_count ) ) {
-
-			$call_back();
-			exit;
-
 		}
 	}
 
-	/*
+	/**
 	 * File upload
 	 */
 
-	public function upload( $input, $file_data ) {
-
+	public function upload( $input, $params ) {
 		$default = array(
 			'name' => $_FILES[$input]['name'],
 			'allowed_formats' => [],
-			'size_range' => [ 'min' => false, 'max' => false ],
+			'size_range' => [ 'min' => NULL, 'max' => NULL ],
 			'upload_dir' => ''
 		);
 
-		$file_data = array_merge( $default, $file_data );
-
-		$upload_errors = [];
-
-		$uf = true; // can file be uploaded?
+		$params = array_merge( $default, $params );
+		$uf = TRUE; // can file be uploaded?
+		$format = pathinfo( $_FILES[$input]['name'], PATHINFO_EXTENSION );
 
 		// target file
-		$target = $upload_dir . $file_data['name'];
+		if( $params['name'] == $_FILES[$input]['name'] ) $target = $params['upload_dir'] . $params['name'];
+		else $target = $params['upload_dir'] . $params['name'] . "." . $format;
 
 		// check if file with same name exists
 		if( file_exists( $target ) ) {
-
-			$upload_errors[] = "File already exists!";
-			$uf = false;
-
+			$this->uploadErrors[] = "File already exists!";
+			$uf = FALSE;
 		}
 
 		// check that file size is within specified range, if range is set
-		if( $file_data['size_range']['min'] ) {
-			if( $_FILES[$input]['size'] < $file_data['size_range']['min'] ) {
-				$upload_errors[] = "File size too small";
-				$uf = false;
+		if( isset( $params['size_range']['min'] ) ) {
+			if( $_FILES[$input]['size'] < $params['size_range']['min'] ) {
+				$this->uploadErrors[] = "File size too small";
+				$uf = FALSE;
 			}
 		}
 
-		if( $file_data['size_range']['max'] ) {
-			if( $_FILES[$input]['size'] > $file_data['size_range']['max'] ) {
-				$upload_errors[] = "File size too large";
-				$uf = false;
+		if( isset( $params['size_range']['max'] ) ) {
+			if( $_FILES[$input]['size'] > $params['size_range']['max'] ) {
+				$this->uploadErrors[] = "File size too large";
+				$uf = FALSE;
 			}
 		}
 
 		// allowed file formats
-		$format = pathinfo( $target, PATHINFO_EXTENSION );
-
-		if( !in_array( $format, $file_data['allowed_formats']) ) {
-			$upload_errors[] = "File format not supported";
-			$uf = false;
+		if( !in_array( $format, $params['allowed_formats']) ) {
+			$this->uploadErrors[] = "File format not supported";
+			$uf = FALSE;
 		}
-
 
 		// upload file
 		if( $uf ) {
-			if ( move_uploaded_file( $_FILES["file"]["tmp_name"], $target ) ) {
-		        return true;
+			if ( move_uploaded_file( $_FILES[$input]["tmp_name"], $target ) ) {
+		        return TRUE;
 		    } else {
-		        return false;
+		        return FALSE;
 		    }
 		}
-
 	}
 
-
-	/*
+	/**
 	 * Utility
 	 */
 
 	// redirect page
 	public function redirect_to( $url ) {
-
 		header( "Location: " . $url );
 		exit;
-
 	}
 
 }

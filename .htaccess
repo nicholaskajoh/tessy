@@ -1,13 +1,13 @@
 <IfModule mod_rewrite.c>
 RewriteEngine On
 
-RewriteBase /Tessy/
+RewriteBase /tessy-tests/tessy/
 # if your project is in server root then it should be: RewriteBase /
 # if your project is in folder then it should be: RewriteBase /folder_name/
 
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^(.*)$ index.php/?$1 [L]
+RewriteRule ^(.*)$ index.php/?$1 [QSA,NC]
 </IfModule>
 
 <IfModule !mod_rewrite.c>
