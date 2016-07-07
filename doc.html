@@ -1,0 +1,303 @@
+<html>
+<head>
+	<title>Tessy PHP Nano Framework</title>
+</head>
+
+<body>
+	<h1>Tessy PHP Nano Framework</h1>
+	<div>Copyright (c) 2016 Nicholas Terna Kajoh</div>
+	<h2>Documentation v0.1.0</h2>
+	<h4>Introduction</h4>
+	<p>Tessy nano framework is a set of tools that provide a boiler-plate for writing simple PHP apps quickly and efficiently. It is intended to help developers demonstrate, experiment and test code with ease and speed. It is nano as it only implements the fundamental ingredients for web apps in basic code.</p>
+
+	<!-- features -->
+	<h4>Features</h4>
+	<p>Tessy offers the following features out of the box, but you can ofcourse add yours as your project demands:</p>
+
+	<ul>
+		<li>Database connection</li>
+		<li>Database query methods</li>
+		<li>Data sanitization and validation</li>
+		<li>HTML helpers</li>
+		<li>Routing</li>
+		<li>File uploading</li>
+		<li>AJAX request handling</li>
+		<li>Extensibility with custom/3rd-party libraries</li>
+	</ul>
+
+	<!-- getting started -->
+	<h4>Getting started</h4>
+	<p>Unzip Tessy in the root of your project directory. <i>tessy.php</i> is the core of Tessy while <i>index.php</i> is essentially a config file where you initialize your project.</p>
+	<p>Instantiate the Tessy class in <i>index.php</i>: <code>$t = new Tessy();</code>.</p>
+	<p>Here are a bunch of options you can pass your instance as an array: </p>
+	<pre><code>
+		$options = array(
+			'root' => '', // the root of your project e.g http://example.com
+			'auth_users' => false, // starts a session if true
+			'libs_path' => '', // if libraries you're using are not located in the root of your peoject, add a path to them
+			'libs' => [] // an array of file names containing libraries for your project e.g [ 'pagination', 'time', 'pdf' ] without '.php'
+		);
+
+		$t = new Tessy( $options );
+	</code></pre>
+
+	<h4>Connecting to a database</h4>
+	<p>To connect to a database, use:</p>
+	<pre><code>
+		$config = array(
+			"host" => "localhost",
+			"dbname" => "tessy",
+			"username" => "root",
+			"password" => ""
+		);
+
+		$t->odb( $config );
+	</code></pre>
+
+	<p>Close a database connection: </p>
+
+	<pre><code>
+		$t->cdb();
+	</code></pre>
+
+	<!-- Routing -->
+	<h4>Routing</h4>
+	<p>Routing is pretty easy with Tessy: </p>
+	<pre><code>
+		$t->addRoute( '/', function() { echo "Welcome Home!"; } );
+		$t->route();
+	</code></pre>
+	<p><strong> NB: If your project is not in the root of your server, change the <code>RewriteBase</code> in the <i>.htaccess</i> file appropriately i.e <code>RewriteBase /projectFolder/</code></strong></p>
+	<p>Also:</p>
+	<pre><code>
+		$t->addRoute( '/', 'myfunction' );
+		$t->route();
+
+		function myfunction() {
+			echo "Welcome Home!";
+		}
+	</code></pre>
+
+	<p>Use <code>use</code> to access your Tessy instance in an anonymous callback function or <code>global</code> in a non-anonymous one</p>
+	<pre><code>
+		$t->addRoute( '/about', function() use( $t ) { $t...; } );
+		$t->addRoute( '/api/books', 'apiFunc' );
+		
+		function apiFunc() { 
+			global $t;
+			$t...;
+		}
+	</code></pre>
+
+	<p>http://example.com/api/products/books/1/a0qXp3</p>
+	<p>In the above url, <code>api</code> is the route while the rest are parameters. You can access them with <code>$r = $t->routeParams;</code>. <code>$r[1] = 'products'</code>, <code>$r[2] = 'books'</code>, <code>$r[3] = '1'</code>, and <code>$r[4] = 'a0qXp3'</code>. <code>$r[0] = 'api'</code>.</p>
+
+	<p>Use <code>routeElse</code> to handle 404s:</p>
+
+	<pre><code>
+		$t->addRoute( '/a', 'functionA' );
+		$t->addRoute( '/b', 'functionB' );
+		$t->routeElse = "404 Error: Page not Found!";
+		$t->route();
+	</code></pre>
+
+	<p>Also:</p>
+
+	<pre><code>
+		$t->addRoute( '/a', 'functionA' );
+		$t->addRoute( '/b', 'functionB' );
+		$t->routeElse = function() { include "404.html"; };
+		$t->route();
+	</code></pre>
+
+
+	<p><strong>NB: Define all routes in the <i>index.php</i> file.</strong></p>
+
+	<!-- Database queries -->
+	<h4>Making database queries</h4>
+	<p>Tessy provides 4 database query methods: <b>create</b>, <b>read</b>, <b>update</b> and <b>delete</b> - CRUD</p>
+	<p>Create/Insert</p>
+	<pre><code>
+		$table = "myTable";
+		$columns = array(
+			'col2' => 'tessy',
+			'col4' => mt_rand( 1, 100 )
+		);
+
+		$t->create( $table, $columns );
+	</code></pre>
+
+	<p>Read/Select</p>
+	<pre><code>
+		$table = "myTable";
+		$data = $t->read( $table ); // select all columns from myTable
+
+		$columns = [ 'col1', 'col2' ];
+		$data = $t->read( $table, $columns ); // select only col1 and col2
+
+		$clauses = "WHERE col1 > 0 ORDER BY col2 DESC LIMIT 20";
+		$data = $t->read( $table, [], $clauses );
+
+		echo "&lt;pre&gt;";
+		var_dump( $data['data'] ); // multidimensional array of results
+		echo "&lt;/pre&gt;";
+		echo "Rows: " . $data['count']; // number of rows returned
+	</code></pre>
+
+	<p>Edit/Update</p>
+
+	<pre><code>
+		$set = array(
+			'col2' => 'beans',
+			'col3' => 'garri'
+		);
+		$clauses = "WHERE col1 = 1";
+		$t->edit( $table, $set, $clauses );
+	</code></pre>
+
+	<p>Delete</p>
+
+	<pre><code>
+		$clauses = "WHERE col1 > 5";
+		$t->delete( $table, $clauses );
+	</code></pre>
+
+	<h4>HTML helpers</h4>
+	<p>Meta tags</p>
+	<pre><code>
+		$elements = array(
+			[ 'charset' => 'UTF-8' ],
+			[ 'name' => 'description', 'content' => 'A PHP Nano Framework' ],
+			[ 'name' => 'author', 'content' => 'Nicholas Kajoh' ]
+		);
+		$t->meta( $elements );
+	</code></pre>
+
+	<p>Favicon</p>
+	<pre><code>
+		$t->fav(); // if your icon is located in the your server root with file name of favicon.ico
+
+		// otherwise
+		$source = "images/icons/favicon/fav.png";
+		$type = "image/png"; // default = image/x-icon
+		$t->fav( $source, $type );
+	</code></pre>
+
+	<p>CSS</p>
+	<pre><code>
+		$base = "resources/css/"; // from project root
+		$sources = [ 'style', 'bootstrap' ]; // without the '.css'
+		$t->css( $base, $sources ); 
+	</code></pre>
+
+	<p>JavaScript</p>
+	<pre><code>
+		$base = ""; // from project root
+		$sources = [ 'test.min' ];
+		$t->js( $base, $sources ); // without the '.js'
+	</code></pre>
+
+	<h4>Data Sanitization and validation</h4>
+	<p>Tessy's sanitization function cleans data by triming, adding slashes and removing html tags and comments. You can pass it a string or an array of strings.</p>
+	<pre><code>
+		$dirty = '&lt;pre&gt;I'll do my best&lt;/pre&gt;&lt;script src="http://evilsite.com/evilscript.js" &gt;&lt;/script&gt;';
+		$clean = $t->sanitize( $dirty ); // output: I\'ll do my best
+	</code></pre>
+
+	<p>
+		Validation: Tessy offers 5 validation data types:
+		<div><code>uname</code> (username) - can start with _ or a-z, alphanumeric chars only, case insensitive, no spaces</div>
+		<div><code>name</code> - alphabetic chars, hypens, apostrophes only, spaces, case insensitive</div>
+		<div><code>email</code></div>
+		<div><code>number</code> - int or float</div>
+		<div><code>url</code></div>
+	</p>
+
+	<pre><code>
+		$is_valid_username = $t->validate( '_000user', 'uname' ); // returns boolean (true/false)
+		// also...
+		$is_valid_name = $t->validate( 'James Bond', 'name' );
+		$is_valid_email = $t->validate( 'me.you@them.us', 'email' );
+		$is_valid_number = $t->validate( 2016, 'number' );
+		$is_valid_url = $t->validate( 'http://somesite.com/goodstuff', 'url' );
+	</code></pre>
+
+	<h4>File Uploading</h4>
+	<p>File uploading is a breeze with Tessy:</p>
+
+	<pre><code>
+		&lt;input type="file" name="myfile"&gt;
+
+		$input_name = "myfile";
+		$params = array(
+			'name' => 'mynewfile',
+			'allowed_formats' => [ 'jpg', 'png', 'gif', 'raw' ],
+			'size_range' => [ 'min' => 12000, 'max' => 50000 ], // range in bytes
+			'upload_dir' => 'uploads/media/'
+		);
+
+		if( $t->upload( $input_name, $params ) ) echo "File uploaded!";
+	</code></pre>
+
+	<p>Get upload errors if any with <code>$t->uploadErrors // array</code></p>
+
+	<h4>AJAX Request Handling</h4>
+	<p>To use ajax, define a route to handle your request and send your request to that route</p>
+
+	<pre><code>
+		// PHP
+		$t->addRoute( '/myajax', 'handleAjax' );
+		function handleAjax() {
+			var_dump( $_POST );
+		}
+
+		// JS
+ 		&lt;script type="text/javascript"&gt;
+			$(function() {
+				$.ajax({
+					method: 'post',
+					url: '&lt;?php echo $t->root ?&gt;myajax',
+					dataType: 'text',
+					data: { msg: "Hello World" },
+					success: function(res) {
+						console.log( res );
+					}
+				});
+			});
+		&lt;/script&gt;
+	</code></pre>
+
+	<p>Also</p>
+
+	<pre><code>
+		// PHP
+		$t->addRoute( '/myajax', 'handleAjax' );
+		function handleAjax() {
+			global $t;
+			var_dump( $t->routeParams );
+		}
+
+		// JS
+ 		&lt;script type="text/javascript"&gt;
+			$(function() {
+				$.ajax({
+					method: 'get',
+					url: '&lt;?php echo $t->root ?&gt;myajax/id/1',
+					dataType: 'text',
+					success: function(res) {
+						console.log( res );
+					}
+				});
+			});
+		&lt;/script&gt;
+	</code></pre>
+
+	<h4>Extending Tessy</h4>
+	<p>And libraries to Tessy: </p>
+
+	<pre><code>		$t = new Tessy( [ 'libs' => [ 'payment' ] ] ); // this assumes the payment library is contained in a file called payment.php and is located in the root of your project.</code></pre>
+	<p>If your library is not in the root, you can add its path: </p>
+	<pre><code>		$t = new Tessy( [ 'libs' => [ 'payment', 'pdf' ], 'libs_path' => 'includes' ] ); // pdf is another library in the same location</code></pre>
+
+</body>
+</html>
