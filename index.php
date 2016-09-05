@@ -1,15 +1,8 @@
 <?php
 	require_once "tessy.php";
 
-	// project options
-	$options = array(
-		'root' => 'http://localhost/tessy-tests/tessy',
-		'libs_path' => '',
-		'libs' => []
-	);
-
 	// instantiate Tessy
-	$t = new Tessy( $options );
+	$t = new Tessy();
 
 	// open a db connection
 	$config = array(

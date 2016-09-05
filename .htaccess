@@ -1,7 +1,7 @@
 <IfModule mod_rewrite.c>
 RewriteEngine On
 
-RewriteBase /tessy-tests/tessy/
+RewriteBase /tessy/
 # if your project is in server root then it should be: RewriteBase /
 # if your project is in folder then it should be: RewriteBase /folder_name/
 

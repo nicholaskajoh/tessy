@@ -22,24 +22,11 @@
 		<li>Routing</li>
 		<li>File uploading</li>
 		<li>AJAX request handling</li>
-		<li>Extensibility with custom/3rd-party libraries</li>
 	</ul>
 
 	<!-- getting started -->
 	<h4>Getting started</h4>
-	<p>Unzip Tessy in the root of your project directory. <i>tessy.php</i> is the core of Tessy while <i>index.php</i> is essentially a config file where you initialize your project.</p>
-	<p>Instantiate the Tessy class in <i>index.php</i>: <code>$t = new Tessy();</code>.</p>
-	<p>Here are a bunch of options you can pass your instance as an array: </p>
-	<pre><code>
-		$options = array(
-			'root' => '', // the root of your project e.g http://example.com
-			'auth_users' => false, // starts a session if true
-			'libs_path' => '', // if libraries you're using are not located in the root of your peoject, add a path to them
-			'libs' => [] // an array of file names containing libraries for your project e.g [ 'pagination', 'time', 'pdf' ] without '.php'
-		);
-
-		$t = new Tessy( $options );
-	</code></pre>
+	<p>Setting things up is easy and straightforward. First, clone Tessy/unzip it to the root your project directory. Then, open the <i>index.php</i> file in a text editor. There you'd find: <code>require "tessy.php"</code>. To start, instanciate the Tessy class like so: <code>$t = new Tessy();</code>.</p>
 
 	<h4>Connecting to a database</h4>
 	<p>To connect to a database, use:</p>
@@ -291,13 +278,6 @@
 			});
 		&lt;/script&gt;
 	</code></pre>
-
-	<h4>Extending Tessy</h4>
-	<p>And libraries to Tessy: </p>
-
-	<pre><code>		$t = new Tessy( [ 'libs' => [ 'payment' ] ] ); // this assumes the payment library is contained in a file called payment.php and is located in the root of your project.</code></pre>
-	<p>If your library is not in the root, you can add its path: </p>
-	<pre><code>		$t = new Tessy( [ 'libs' => [ 'payment', 'pdf' ], 'libs_path' => 'includes' ] ); // pdf is another library in the same location</code></pre>
 
 </body>
 </html>

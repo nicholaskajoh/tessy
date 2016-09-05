@@ -12,37 +12,27 @@
 	<li>Routing</li>
 	<li>File uploading</li>
 	<li>AJAX request handling</li>
-	<li>Extensibility with custom/3rd-party libraries</li>
 </ul>
 
 <h4>Tessy core</h4>
-<p>The whole framework is contained in one file, <i>tessy.php</i>, which has a class called <i>Tessy</i>.</p>
+<p>The core of the framework is contained in one file, <i>tessy.php</i>, which has a class called <i>Tessy</i>.</p>
 <div>
-	<div>+ MyNanoProject</div>
+	<div>- MyNanoProject</div>
 	<div>&nbsp; - tessy.php</div>
 	<div>&nbsp; - index.php</div>
 	<div>&nbsp; - .htaccess</div>
 </div>
-<i>Darn simple!</i>
 
 <h4>Setting up Tessy</h4>
-<p>Setting things up is easy and straightforward. First, unzip Tessy into the root your project directory.
-Then, open the <i>index.php</i> file in a text editor. There's just one line of code: <code>require "tessy.php"</code>.
+<p>Setting things up is easy and straightforward. First, clone Tessy/unzip it to the root your project directory.
+Then, open the <i>index.php</i> file in a text editor. There you'd find: <code>require "tessy.php"</code>.
 To start, instanciate the Tessy class like so: <code>$t = new Tessy();</code>.</p>
 	
 <h4>Moving forward</h4>
-<a href="https://github.com/nicholaskajoh/tessy/wiki">Read the Documentation</a> to find out in detail how to use all the functionality Tessy offers.
-
-
-<h4>Extending Tessy</h4>
-<p>Tessy is nano and doesn't ship with all the bells, batteries and whistles you've come to expect in a web framework, but writing custom functionality is a breeze. Open the <i>index.php</i> file and include the <code>libs</code> parameter in your Tessy instance like so: </p>
-<pre><code>$t = new Tessy( [ 'libs' => [ 'payment' ] ] ); // this assumes the payment library is contained in a file called payment.php and is located in the root of your project.</pre></code>
-<p>If your library is not in the root, you can add its path: </p>
-<pre><code>$t = new Tessy( [ 'libs' => [ 'payment', 'pdf' ], 'libs_path' => 'includes' ] ); // pdf is another library in the same location</pre></code>
+<p><a href="https://github.com/nicholaskajoh/tessy/wiki">Read the Documentation</a> to find out in detail how to use all the functionality Tessy offers.</p>
 
 <h4>Contribute</h4>
 <p>Found any bugs, got more elegant ways a piece of code could be written or any ideas that can make Tessy better? Add an issue, PM me or fork the project (the tests branch) and send a pull request. <i>A rule though is that Tessy must be contained in one file, one class and have brief and straight-to-the-point methods</i>. Peace!</p>
-
 
 <h4>License</h4>
 <p>MIT License</p>
