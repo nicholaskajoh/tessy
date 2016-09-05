@@ -1,0 +1,7 @@
+*
+
+!.gitignore
+!.htaccess
+!index.php
+!readme.md
+!tessy.php

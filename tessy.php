@@ -31,40 +31,14 @@
 
 class Tessy {
 
-	/**
-	 * VARIABLES
-	 */
-
-	public $root; // root of project e.g http://example.com/
+	# VARIABLES
 	public static $c; // db connection (object)
-	protected $routes = [];
-	public $routeParams = [];
-	public $routeElse = "Page Not Found!"; // if specified route does not exist
-	public $uploadErrors = [];
+	protected $routes = []; // app routes (e.g of route in example.com/blog/1/hello == blog)
+	public $route_params = []; // route parameters (e.g of route parameters in example.com/blog/1/hello == 1, hello)
+	public $route_else = "<h2 style=\"text-align: center; font-family: Arial; padding-top: 50px;\">Error (404): Page Not Found!</h2"; // if specified route does not exist, return 404
+	public $upload_errors = []; // file upload errors e.g wrong fie format, too small/large file size etc
 
-	/**
-	 * METHODS
-	 */
-
-	function __construct( $args = [] ) {
-		$default = array(
-			'root' => '',
-			'libs_path' => '',
-			'libs' => ''
-		);
-
-		$args = array_merge( $default, $args );
-
-		// project root
-		$this->root = $args['root'] . "/";
-
-		//include any libraries
-		if( $args['libs'] != NULL ) {
-			foreach( $args['libs'] as $lib )
-				require_once $args['libs_path'] . "/" . $lib . ".php";
-		}
-	}
-
+	# METHODS
 	/**
 	 * DB connection
 	 */
@@ -181,7 +155,7 @@ class Tessy {
 		/** 
 		 * DATA TYPES
 		 * username - starts with _ or a-z, alphanumeric chars only, case insensitive, no spaces
-		 * name - alphabetic chars, hypens, apostrophes only, spaces, case insensitive
+		 * name - alphabetic chars, hyphens, apostrophes only, spaces, case insensitive
 		 * email
 		 * number - int or float
 		 * url
@@ -248,7 +222,7 @@ class Tessy {
 		foreach ($data as $key => $value)
 			$data[$key] = preg_replace( $regexes, $replace_with, addslashes( trim( $value ) ) );
 		
-		// if $data has only one element, return as string
+		// if $data has only one element, return as string, else return array
 		if( count( $data ) == 1 ) return $data[0]; else return $data;
 	}
 
@@ -266,17 +240,17 @@ class Tessy {
 	}
 
 	public function fav( $src = "favicon.ico", $type = "image/x-icon" ) {
-		echo "<link rel=\"icon\" type=\"$type\" href=\"$this->root$src\" >";
+		echo "<link rel=\"icon\" type=\"$type\" href=\"/$src\" >";
 	}
 
 	public function css( $base, $srcs ) {
 		foreach( $srcs as $src )
-			echo "<link rel=\"stylesheet\" href=\"$this->root$base$src.css\" >";
+			echo "<link rel=\"stylesheet\" href=\"/$base$src.css\" >";
 	}
 
 	public function js( $base, $srcs ) {
 		foreach( $srcs as $src )
-			echo "<script src=\"$this->root$base$src.js\" ></script>";
+			echo "<script src=\"/$base$src.js\" ></script>";
 	}
 
 
@@ -284,24 +258,24 @@ class Tessy {
 	 * Routing
 	 */
 
-	public function addRoute( $route, $call_back ) {
+	public function add_route( $route, $call_back ) {
 		$__ = explode( "/", $route );
 		$this->routes[ $__[1] ] = $call_back;
 	}
 
-	private function currentRoute() {
+	private function current_route() {
 		return explode( "/", $_SERVER['QUERY_STRING'] ); // from the url
 	}
 
 	public function route() {
 		// find matching route and return call back or 404 if there's no match
-		if( array_key_exists( $this->currentRoute()[0], $this->routes ) ) {
-			$this->routeParams = $this->currentRoute();
-			if( is_callable( $this->routes[$this->currentRoute()[0]] ) ) $this->routes[$this->currentRoute()[0]]();
-			else call_user_func_array( $this->routes[$this->currentRoute()[0]], [ $this ] );
+		if( array_key_exists( $this->current_route()[0], $this->routes ) ) {
+			$this->route_params = $this->current_route();
+			if( is_callable( $this->routes[$this->current_route()[0]] ) ) $this->routes[$this->current_route()[0]]();
+			else call_user_func_array( $this->routes[$this->current_route()[0]], [ $this ] );
 		} else {
-			if( is_callable( $this->routeElse ) ) ($this->routeElse)();
-			else echo $this->routeElse;
+			if( is_callable( $this->route_else ) ) ($this->route_else)();
+			else echo $this->route_else;
 		}
 	}
 
@@ -319,7 +293,7 @@ class Tessy {
 
 		$params = array_merge( $default, $params );
 		$uf = TRUE; // can file be uploaded?
-		$format = pathinfo( $_FILES[$input]['name'], PATHINFO_EXTENSION );
+		$format = pathinfo( $_FILES[$input]['name'], PATHINFO_EXTENSION ); // file format
 
 		// target file
 		if( $params['name'] == $_FILES[$input]['name'] ) $target = $params['upload_dir'] . $params['name'];
@@ -327,38 +301,36 @@ class Tessy {
 
 		// check if file with same name exists
 		if( file_exists( $target ) ) {
-			$this->uploadErrors[] = "File already exists!";
+			$this->upload_errors[] = "File already exists!";
 			$uf = FALSE;
 		}
 
 		// check that file size is within specified range, if range is set
+		// MIN
 		if( isset( $params['size_range']['min'] ) ) {
 			if( $_FILES[$input]['size'] < $params['size_range']['min'] ) {
-				$this->uploadErrors[] = "File size too small";
+				$this->upload_errors[] = "File size too small";
 				$uf = FALSE;
 			}
 		}
-
+		// MAX
 		if( isset( $params['size_range']['max'] ) ) {
 			if( $_FILES[$input]['size'] > $params['size_range']['max'] ) {
-				$this->uploadErrors[] = "File size too large";
+				$this->upload_errors[] = "File size too large";
 				$uf = FALSE;
 			}
 		}
 
 		// allowed file formats
 		if( !in_array( $format, $params['allowed_formats']) ) {
-			$this->uploadErrors[] = "File format not supported";
+			$this->upload_errors[] = "File format not supported";
 			$uf = FALSE;
 		}
 
 		// upload file
 		if( $uf ) {
-			if ( move_uploaded_file( $_FILES[$input]["tmp_name"], $target ) ) {
-		        return TRUE;
-		    } else {
-		        return FALSE;
-		    }
+			if ( move_uploaded_file( $_FILES[$input]["tmp_name"], $target ) ) return TRUE;
+		    return FALSE;
 		}
 	}
 
@@ -371,5 +343,4 @@ class Tessy {
 		header( "Location: " . $url );
 		exit;
 	}
-
 }
