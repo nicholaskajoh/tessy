@@ -5,29 +5,29 @@
 <h4>What's in the box?</h4>
 <p>Tessy offers the following features out of the box, but you can ofcourse add yours as your project demands:</p>
 <ul>
-	<li>Database connection</li>
-	<li>Database query methods</li>
-	<li>Data sanitization and validation</li>
-	<li>HTML helpers</li>
-	<li>Routing</li>
-	<li>File uploading</li>
-	<li>AJAX request handling</li>
+  <li>Database connection</li>
+  <li>Database query methods</li>
+  <li>Data sanitization and validation</li>
+  <li>HTML helpers</li>
+  <li>Routing</li>
+  <li>File uploading</li>
+  <li>AJAX request handling</li>
 </ul>
 
 <h4>Tessy core</h4>
 <p>The core of the framework is contained in one file, <i>tessy.php</i>, which has a class called <i>Tessy</i>.</p>
 <div>
-	<div>- MyNanoProject</div>
-	<div>&nbsp; - tessy.php</div>
-	<div>&nbsp; - index.php</div>
-	<div>&nbsp; - .htaccess</div>
+  <div>- MyNanoProject</div>
+  <div>&nbsp; - tessy.php</div>
+  <div>&nbsp; - index.php</div>
+  <div>&nbsp; - .htaccess</div>
 </div>
 
 <h4>Setting up Tessy</h4>
 <p>Setting things up is easy and straightforward. First, clone Tessy/unzip it to the root your project directory.
 Then, open the <i>index.php</i> file in a text editor. There you'd find: <code>require "tessy.php"</code>.
 To start, instanciate the Tessy class like so: <code>$t = new Tessy();</code>.</p>
-	
+    
 <h4>Moving forward</h4>
 <p><a href="https://github.com/nicholaskajoh/tessy/wiki">Read the Documentation</a> to find out in detail how to use all the functionality Tessy offers.</p>
 
